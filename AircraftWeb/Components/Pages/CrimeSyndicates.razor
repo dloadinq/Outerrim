@@ -1,0 +1,123 @@
+﻿@page "/crime-syndicates"
+@using Database.Entities
+@using Microsoft.VisualBasic
+@using Repository.Interfaces
+@rendermode InteractiveServer
+@inject IRepository<CrimeSyndicate> Repository
+
+<h3>Crime Syndicates</h3>
+
+@if (_syndicates is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Location</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var syndicate in _syndicates)
+        {
+            <tr>
+                <td>@syndicate.SyndicateId</td>
+                <td>@syndicate.Name</td>
+                <td>@syndicate.Location</td>
+                <td>
+                    <button class="btn btn-primary" @onclick="() => EditSyndicate(syndicate)">Edit</button>
+                    <button class="btn btn-danger" @onclick="() => DeleteSyndicate(syndicate)">Delete</button>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <h3>@(_editing ? "Edit" : "Add") Crime Syndicate</h3>
+    <EditForm Model="@_currentSyndicate" OnValidSubmit="SaveSyndicate" class="mb-3">
+        <DataAnnotationsValidator />
+        <div class="mb-3">
+            <label>Name</label>
+            <InputText class="form-control" @bind-Value="_currentSyndicate.Name" />
+        </div>
+        <div class="mb-3">
+            <label>Location</label>
+            <InputText class="form-control" @bind-Value="_currentSyndicate.Location" />
+        </div>
+        <button type="submit" class="btn btn-success">@(_editing ? "Save" : "Add")</button>
+        <button type="button" class="btn btn-secondary" @onclick="CancelEdit">Cancel</button>
+    </EditForm>
+}
+
+@code {
+    private List<CrimeSyndicate>? _syndicates;
+    private CrimeSyndicate? _currentSyndicate = new ();
+    private bool _editing;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _syndicates = await Repository.ReadAllAsync();
+    }
+
+    private void EditSyndicate(CrimeSyndicate syndicate)
+    {
+        _currentSyndicate = new CrimeSyndicate
+        {
+            SyndicateId = syndicate.SyndicateId,
+            Name = syndicate.Name,
+            Location = syndicate.Location
+        };
+        _editing = true;
+    }
+
+    private async Task SaveSyndicate()
+    {
+        if (_editing)
+        {
+            if (_currentSyndicate != null)
+            {
+                var updatedSyndicate = await Repository.ReadAsync(_currentSyndicate.SyndicateId);
+                if (updatedSyndicate != null)
+                {
+                    updatedSyndicate.Location = _currentSyndicate.Location;
+                    updatedSyndicate.Name = _currentSyndicate.Name;
+                    await Repository.UpdateAsync(updatedSyndicate);
+                }
+            }
+        }
+        else
+        {
+            if(_currentSyndicate != null) await Repository.CreateAsync(_currentSyndicate);
+        }
+
+        _syndicates = await Repository.ReadAllAsync();
+        _currentSyndicate = new CrimeSyndicate
+        {
+            Name = "",
+            Location = ""
+        };
+        _editing = false;
+    }
+
+    private async Task DeleteSyndicate(CrimeSyndicate syndicate)
+    {
+        await Repository.DeleteAsync(syndicate);
+        _syndicates = await Repository.ReadAllAsync();
+    }
+
+    private void CancelEdit()
+    {
+        _currentSyndicate = new CrimeSyndicate
+        {
+            Name = "",
+            Location = ""
+        };
+        _editing = false;
+    }
+
+}

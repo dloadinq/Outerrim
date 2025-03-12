@@ -5,6 +5,7 @@ using Database.Entities;
 using Microsoft.EntityFrameworkCore;
 using Repository.Interfaces;
 using Repository.SpecifiedRepositories;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var assembly = Assembly.GetExecutingAssembly();
@@ -28,6 +29,8 @@ builder.Services.AddScoped<IRepository<Mercenary>, MercenaryRepository>();
 builder.Services.AddScoped<IRepository<AircraftCrews>, AircraftCrewRepository>();
 builder.Services.AddScoped<IRepository<CrimeSyndicate>, CrimeSyndicatesRepository>();
 builder.Services.AddScoped<IRepository<AircraftSpecification>, AircraftSpecificationRepository>();
+
+builder.Services.AddMudServices();
 
 var app = builder.Build();
 
